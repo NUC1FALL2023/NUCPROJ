@@ -5,43 +5,20 @@
 
 statefile = open('spbasis.dat','r')
 
-n = []
-l = []
-j = []
-m = []
-t = []
+states = []
 
 for x in statefile:
     temp1,temp2,temp3,temp4,temp5,temp6 = x.split()
-    n.append(int(temp2))
-    l.append(int(temp3))
-    j.append(int(temp4))
-    m.append(int(temp5))
-    t.append(int(temp6))
+    states.append(dict(n=temp2,l=temp3,j=temp4,mj=temp5,t3=temp6))
     
 Vfile = open('tbme.dat','r')
 
-a = []
-b = []
-c = []
-d = []
-Vabcd = []
+V = []
 
 for x in Vfile:
     temp1,temp2,temp3,temp4,temp5 = x.split()
-    a.append(int(temp1))
-    b.append(int(temp2))
-    c.append(int(temp3))
-    d.append(int(temp4))
-    Vabcd.append(float(temp5))
-    
-states = []
-for i in range(len(n)):
-    states.append(dict(n=n[i],l=l[i],j=j[i],mj=m[i],t3=t[i]))
-    
-V = []
-for i in range(len(Vabcd)):
-    V.append(dict(a=a[i],b=b[i],c=c[i],d=d[i],val=Vabcd[i]))
+    V.append(dict(a=temp1,b=temp2,c=temp3,d=temp4,val=temp5))
+
 
 ##################################################################
 ###                         END                                ###
