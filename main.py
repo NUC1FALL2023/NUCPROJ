@@ -41,7 +41,7 @@ for x in VDict:
 # Energies of Harmonic Oscillator
 eps = np.zeros(lenStates)
 
-hw = 1 # HO quanta, chosen in MeV
+hw = 10 # HO quanta, chosen in MeV
 for i in range(lenStates):
     eps[i] = hw*(statesDict[i]["N"]+3/2)
     
@@ -57,15 +57,16 @@ C = np.random.rand(lenStates,lenStates)
 ##################################################################
 
 # Number of nucleons
-A = 16
+A = 4
 
 # How small of a difference in energy do we want?
-saturation = 0.001 
+saturation = 0.0001 
 dE = 1
-max_iter = 10
+max_iter = 1000
 it_count = 0
 ener_old = np.zeros(lenStates)
 energies = np.zeros(lenStates)
+orbit = ["s","p","d","f","g","h"]
 
 while ((dE > saturation) and (it_count < max_iter)):
     # Calculate the one body density matrix
@@ -96,11 +97,14 @@ while ((dE > saturation) and (it_count < max_iter)):
     energies, C = np.linalg.eigh(HF)
     
     # Calculate energy difference
-    dE = np.sum(np.abs(energies-ener_old))
+    dE = np.sum(np.abs(energies-ener_old))/lenStates
     it_count += 1
     
     print("Iteration " + str(it_count))
     for i in range(lenStates):
-        print(str(statesDict[i]["n"]) + " " + str(statesDict[i]["l"]) + " " + str(statesDict[i]["j"]) + " " + str(statesDict[i]["mj"]) + " " + str(statesDict[i]["t3"]) + " " + str(energies[i]))
+        match statesDict[i]["t3"]:
+            case 1: nuc = "n"
+            case -1: nuc = "p" 
+        print(str(statesDict[i]["N"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(energies[i],4))+ " MeV")
         
     print("\n")
