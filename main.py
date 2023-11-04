@@ -102,9 +102,8 @@ while ((dE > saturation) and (it_count < max_iter)):
     
     print("Iteration " + str(it_count))
     for i in range(lenStates):
-        match statesDict[i]["t3"]:
-            case 1: nuc = "n"
-            case -1: nuc = "p" 
+        if statesDict[i]["t3"] == 1: nuc = "n"
+        else: nuc = "p"
         print(str(statesDict[i]["N"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(energies[i],4))+ " MeV")
         
     print("\n")
