@@ -36,7 +36,7 @@ for s in statesDict:
 V = np.zeros((lenStates,lenStates,lenStates,lenStates))
 
 for x in VDict:
-    V[x["a"]][x["b"]][x["c"]][x["a"]] = x["val"]
+    V[x["a"]][x["b"]][x["c"]][x["d"]] = x["val"]
 
 # Energies of Harmonic Oscillator
 eps = np.zeros(lenStates)
