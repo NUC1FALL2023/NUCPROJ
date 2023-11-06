@@ -1,4 +1,5 @@
 import numpy as np
+from HartreeFock import *
 
 ##################################################################
 ###             READ DAT FILES PROVIDED                        ###
@@ -24,6 +25,7 @@ for x in Vfile:
     temp1,temp2,temp3,temp4,temp5 = x.split()
     VDict.append(dict(a=int(temp1)-1,b=int(temp2)-1,c=int(temp3)-1,d=int(temp4)-1,val=float(temp5)))
     
+# Calculate N=2n+l for all states, not needed for sd-basis
 for s in statesDict:
     s.update({"N":2*s["n"]+s["l"]})    
     
@@ -41,69 +43,26 @@ for x in VDict:
 # Energies of Harmonic Oscillator
 eps = np.zeros(lenStates)
 
-hw = 10 # HO quanta, chosen in MeV
+hw = 1.5 # HO quanta, chosen in MeV
 for i in range(lenStates):
     eps[i] = hw*(statesDict[i]["N"]+3/2)
     
-# Take a random matrix to guess C[delta][gamma]
-C = np.random.rand(lenStates,lenStates)
+# Running Hartree Fock
+# Function is stored in HartreeFock.py
+# Inputs are HartreeFock( A , Smallest Difference in Energy Wanted , 
+#                           Basis Stored as a Dict , Energies in an Array,
+#                           and Two Body Density Matrix as 4d Array)
+bindingEnergies = HartreeFock(4,1e-5,statesDict,eps,V)
 
-##################################################################
-##################################################################
-##################################################################
-###                 START OF THE HF METHOD                     ###
-##################################################################
-##################################################################
-##################################################################
-
-# Number of nucleons
-A = 4
-
-# How small of a difference in energy do we want?
-saturation = 0.0001 
-dE = 1
-max_iter = 1000
-it_count = 0
-ener_old = np.zeros(lenStates)
-energies = np.zeros(lenStates)
+# Writing out final energies
+# orbit defined by l quantum number
 orbit = ["s","p","d","f","g","h"]
+f = open("BindingEnergiesHO.txt","w")
 
-while ((dE > saturation) and (it_count < max_iter)):
-    # Calculate the one body density matrix
-    rho = np.zeros((lenStates,lenStates))
-
-    for delta in range(lenStates):
-        for gamma in range(lenStates):
-            for j in range(A):
-                rho[delta][gamma] += C[delta][j]*C[gamma][j]
+for i in range(lenStates):
+    # prints out in orbital notation nl^pi,nu (j)
+    if statesDict[i]["t3"] == 1: nuc = "n"
+    else: nuc = "p"
+    f.write(str(statesDict[i]["N"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(bindingEnergies[i],4))+ " MeV\n")
     
-    # Calculate HF Potential
-    U = np.zeros((lenStates,lenStates))
-    
-    for eta in range(lenStates):
-        for beta in range(lenStates):
-            for delta in range(lenStates):
-                for gamma in range(lenStates):
-                    U[eta][beta] += rho[delta][gamma]*V[eta][gamma][beta][delta]
-                    
-    # For initial <alpha|h_0|beta>, use diagonal matrix with energies
-    E = np.diag(eps)
-            
-    # Calculate Hartree-Fock Hamiltonian
-    HF = E+U
-    
-    # Calculate new C matrix and energies, store previous energies
-    ener_old = energies
-    energies, C = np.linalg.eigh(HF)
-    
-    # Calculate energy difference
-    dE = np.sum(np.abs(energies-ener_old))/lenStates
-    it_count += 1
-    
-    print("Iteration " + str(it_count))
-    for i in range(lenStates):
-        if statesDict[i]["t3"] == 1: nuc = "n"
-        else: nuc = "p"
-        print(str(statesDict[i]["N"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(energies[i],4))+ " MeV")
-        
-    print("\n")
+f.close()
