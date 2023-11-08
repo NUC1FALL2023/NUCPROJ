@@ -1,8 +1,7 @@
 import numpy as np
 from tabulate import tabulate
-import pandas as pd
 
-# First we need to decide the size of the model space by selecting an 'n' value
+# First we need 2to decide the size of the model space by selecting an 'n' value
 n_max = int(input('Give n(max like 3 tbh): '))
 
 # we are working in sd so l = 0 or 2
