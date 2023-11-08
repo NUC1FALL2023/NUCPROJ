@@ -1,4 +1,5 @@
 import numpy as np
+from tabulate import tabulate
 import pandas as pd
 
 # First we need to decide the size of the model space by selecting an 'n' value
