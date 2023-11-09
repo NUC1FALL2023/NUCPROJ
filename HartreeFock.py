@@ -11,6 +11,8 @@ def HartreeFock(A,sat,states,eps,V):
     energies = np.zeros(numStates)
     orbit = ["s","p","d","f","g","h"]
     
+    allEnergies = []
+    
     # initial C matrix is guessed at random
     C = np.random.rand(numStates,numStates)    
     
@@ -56,8 +58,15 @@ def HartreeFock(A,sat,states,eps,V):
             # prints out in orbital notation nl^pi,nu (j)
             if states[i]["t3"] == 1: nuc = "n"
             else: nuc = "p"
-            print(str(states[i]["N"])+orbit[states[i]["l"]]+"^"+nuc+"("+str(states[i]["j"])+"/2) " + str(round(energies[i],4))+ " MeV")
+            print(str(states[i]["n"])+orbit[states[i]["l"]]+"^"+nuc+"("+str(states[i]["j"])+"/2) " + str(round(energies[i],4))+ " MeV")
             
         print("\n")
         
-    return energies
+        allEnergies.append(energies)
+        
+    countNeg = 0
+    for i in range(len(allEnergies[-1])):
+        if allEnergies[-1][i] < 0:
+            countNeg += 1
+        
+    return allEnergies, countNeg
