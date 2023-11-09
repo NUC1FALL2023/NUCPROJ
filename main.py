@@ -43,16 +43,28 @@ for x in VDict:
 # Energies of Harmonic Oscillator
 eps = np.zeros(lenStates)
 
-hw = 1.5 # HO quanta, chosen in MeV
+hw = 10 # HO quanta, chosen in MeV
 for i in range(lenStates):
     eps[i] = hw*(statesDict[i]["N"]+3/2)
+    
+##################################################################
+###                    Run Hartree Fock                        ###
+##################################################################
     
 # Running Hartree Fock
 # Function is stored in HartreeFock.py
 # Inputs are HartreeFock( A , Smallest Difference in Energy Wanted , 
 #                           Basis Stored as a Dict , Energies in an Array,
 #                           and Two Body Density Matrix as 4d Array)
-bindingEnergies = HartreeFock(4,1e-5,statesDict,eps,V)
+# Outputs are bindingEnergies, a 2d array where the first index is the iteration number
+#                           and the second index is the state index
+# To access the final iteration, use bindingEnergies[-1] as the array
+# Expected negEnergies = A
+
+# A is number of nucleons
+A = 4
+
+bindingEnergies, negEnergies = HartreeFock(A,1e-5,statesDict,eps,V)
 
 # Writing out final energies
 # orbit defined by l quantum number
@@ -63,6 +75,13 @@ for i in range(lenStates):
     # prints out in orbital notation nl^pi,nu (j)
     if statesDict[i]["t3"] == 1: nuc = "n"
     else: nuc = "p"
-    f.write(str(statesDict[i]["N"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(bindingEnergies[i],4))+ " MeV\n")
+    f.write(str(statesDict[i]["n"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(bindingEnergies[-1][i],4))+ " MeV\n")
     
+B = np.zeros(len(bindingEnergies))
+
+# Calculates the binding energy per nucleon and stores it in an array
+for i in range(len(bindingEnergies)):
+    B[i] = sum(bindingEnergies[i][:negEnergies])/negEnergies
+        
+
 f.close()
