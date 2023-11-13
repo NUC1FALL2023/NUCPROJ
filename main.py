@@ -53,7 +53,8 @@ for i in range(lenStates):
     
 # Running Hartree Fock
 # Function is stored in HartreeFock.py
-# Inputs are HartreeFock( A , Smallest Difference in Energy Wanted , 
+# Inputs are HartreeFock( A , Smallest Difference in Energy Wanted ,
+#                           Max Number of iterations requests , 
 #                           Basis Stored as a Dict , Energies in an Array,
 #                           and Two Body Density Matrix as 4d Array)
 # Outputs are bindingEnergies, a 2d array where the first index is the iteration number
@@ -64,7 +65,7 @@ for i in range(lenStates):
 # A is number of nucleons
 A = 4
 
-bindingEnergies, negEnergies = HartreeFock(A,1e-5,statesDict,eps,V)
+bindingEnergies, negEnergies = HartreeFock(A,1e-5,1000,statesDict,eps,V)
 
 # Writing out final energies
 # orbit defined by l quantum number

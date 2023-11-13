@@ -1,11 +1,10 @@
 import numpy as np
 
-def HartreeFock(A,sat,states,eps,V):
+def HartreeFock(A,sat,max_iter,states,eps,V):
     
     numStates = len(eps)
     
     dE = 1
-    max_iter = 1000
     it_count = 0
     ener_old = np.zeros(numStates)
     energies = np.zeros(numStates)
