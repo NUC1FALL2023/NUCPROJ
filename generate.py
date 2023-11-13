@@ -1,6 +1,7 @@
 import numpy as np
 from tabulate import tabulate
 import time
+from HartreeFock import *
 
     
 ##################################################################
@@ -18,7 +19,7 @@ statesDict = []
 # States that should be generated
 n = [0,1,0]
 l = [2,0,2]
-j = [3,1,5]
+j = [5,1,3]
 
 
 # next we need to go over all possible combinations of quantum numbers, starting with 'n'
@@ -37,8 +38,8 @@ for i in range(len(n)): # there is only l=0 and l=2 in this case but could be ad
             mj = mj-2
             eps.append(val)
             
-# Optimized Energies from literature (placeholder until we find these)
-realEps = np.zeros(ite)
+# Optimized Energies from literature 
+realEps = [4.15,4.15,8.02,8.02,3.94,3.94,7.63,7.63,3.77,3.77,6.84,6.84,2.75,2.75,3.61,3.61,8.62,8.62,11.42,11.42,7,7,9.9,9.9]
 
 # the tabulate function is slow but that should not matter for these calculations
 f.write(tabulate(data, tablefmt="plain",showindex=False))
@@ -88,46 +89,52 @@ end = time.time()
  
 print(end-start)
 
+# Options for optimization
+dE = 1e-5
+step = 0.0001
+max_iter = 5
+A = 1
+max_steps = 100
     
 ##################################################################
 ###                   Optimize Energies                        ###
 ##################################################################
 
-dE = 1e-5
-step = 0.0001
-max_iter = 5
-
-minError = 1e20
+Error = 1e20
 newEps = eps.copy()
 
 for i in range(ite):
     
-    while minError > dE:
+    step_iter = 0
+    
+    while Error > dE and step_iter < max_steps:
 
         epsPlus = eps.copy()
         epsMinus = eps.copy()
         epsPlus[i] += step
         epsMinus[i] -= step
         
-        bindingEnergiesStart, skip = HartreeFock(16,1e-5,max_iter,statesDict,eps,V)    
-        bindingEnergiesPlus, skip = HartreeFock(16,1e-5,max_iter,statesDict,epsPlus,V)    
-        bindingEnergiesMinus, skip = HartreeFock(16,1e-5,max_iter,statesDict,epsMinus,V)
+        bindingEnergiesStart, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,V)    
+        bindingEnergiesPlus, skip = HartreeFock(A,1e-5,max_iter,statesDict,epsPlus,V)    
+        bindingEnergiesMinus, skip = HartreeFock(A,1e-5,max_iter,statesDict,epsMinus,V)
         
-        dEStart = np.average(abs(bindingEnergiesStart - realEps))
-        dEPlus = np.average(abs(bindingEnergiesPlus - realEps))
-        dEMinus = np.average(abs(bindingEnergiesMinus - realEps))
+        dEStart = np.sum(np.square(bindingEnergiesStart[-1] - realEps))
+        dEPlus = np.sum(np.square(bindingEnergiesPlus[-1] - realEps))
+        dEMinus = np.sum(np.square(bindingEnergiesMinus[-1] - realEps))
     
-        if dEPlus < dEStart:
-            if dEMinus < dEStart:
-                newEps = epsMinus.copy()
-                minError = dEMinus
-            else:
-                newEps = epsPlus.copy()
-                minError = dEPlus
-        else: 
-            break
+        fp = (dEPlus-dEMinus)/(2*step)
+        f = dEStart
         
-        eps = newEps.copy() 
+        newEps = eps.copy()
+        newEps[i] = eps[i] - fp/f
+        
+        eps = newEps.copy()
+        
+        checkBindingEnergy, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,V)
+        Error = np.sum(np.square(checkBindingEnergy[-1] - realEps))
+        step_iter += 1
+        
+    print("Converged for energy " + str(i) + "\n")
     
 f = open("sdbasisGeneratedOptimized.dat","w")
 dataOpt = []
@@ -152,11 +159,8 @@ f.close()
 ##################################################################
 ###          Optimize Two Body Matrix Elements                 ###
 ##################################################################
-dE = 1e-5
-step = 0.0001
-max_iter = 5
 
-minError = 1e20
+Error = 1e20
 newV = V.copy()
 
 VPlus = V.copy()
@@ -168,7 +172,10 @@ for a in range(ite):
             for c in range(ite):
                 for d in range(ite):
                     if (c < d):
-                        while minError > dE:
+                        
+                        step_iter = 0
+                        
+                        while Error > dE and step_iter < max_steps:
 
                             VPlus = V.copy()
                             VMinus = V.copy()
@@ -183,25 +190,28 @@ for a in range(ite):
                             VMinus[b][a][c][d] += step
                             VMinus[a][b][d][c] += step
         
-                            bindingEnergiesStart, skip = HartreeFock(16,1e-5,max_iter,statesDict,newEps,V)    
-                            bindingEnergiesPlus, skip = HartreeFock(16,1e-5,max_iter,statesDict,newEps,VPlus)    
-                            bindingEnergiesMinus, skip = HartreeFock(16,1e-5,max_iter,statesDict,newEps,VMinus)
+                            bindingEnergiesStart, skip = HartreeFock(A,1e-5,max_iter,statesDict,newEps,V)    
+                            bindingEnergiesPlus, skip = HartreeFock(A,1e-5,max_iter,statesDict,newEps,VPlus)    
+                            bindingEnergiesMinus, skip = HartreeFock(A,1e-5,max_iter,statesDict,newEps,VMinus)
         
-                            dEStart = np.average(abs(bindingEnergiesStart - realEps))
-                            dEPlus = np.average(abs(bindingEnergiesPlus - realEps))
-                            dEMinus = np.average(abs(bindingEnergiesMinus - realEps))
+                            dEStart = np.sum(np.square(bindingEnergiesStart[-1] - realEps))
+                            dEPlus = np.sum(np.square(bindingEnergiesPlus[-1] - realEps))
+                            dEMinus = np.sum(np.square(bindingEnergiesMinus[-1] - realEps))
                             
-                            if dEPlus < dEStart:
-                                if dEMinus < dEStart:
-                                    newV = VMinus.copy()
-                                    minError = dEMinus
-                                else:
-                                    newV = VPlus.copy()
-                                    minError = dEPlus
-                            else: 
-                                break
+                            fp = (dEPlus-dEMinus)/(2*step)
+                            f = dEStart
+                            
+                            newV = V.copy()
+                            newEps[a][b][c][d] = V[a][b][c][d] - fp/f
+                            newEps[b][a][d][c] = V[b][a][d][c] - fp/f
+                            newEps[a][b][d][c] = V[a][b][d][c] + fp/f
+                            newEps[b][s][c][d] = V[b][s][c][d] + fp/f
                             
                             V = newV.copy()
+                            
+                            checkBindingEnergy, skip = HartreeFock(A,1e-5,max_iter,statesDict,newEps,V)
+                            Error = np.sum(np.square(checkBindingEnergy[-1] - realEps))
+                            step_iter += 1
                             
 f = open("tbmeGeneratedOptimized.dat","w")
 
