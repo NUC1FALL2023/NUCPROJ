@@ -13,7 +13,8 @@ def HartreeFock(A,sat,max_iter,states,eps,V):
     allEnergies = []
     
     # initial C matrix is guessed at random
-    C = np.random.rand(numStates,numStates)    
+    # C = np.random.rand(numStates,numStates)    
+    C = np.eye(numStates)
     
     # looping until the difference is minimal
     while ((dE > sat) and (it_count < max_iter)):
@@ -52,14 +53,16 @@ def HartreeFock(A,sat,max_iter,states,eps,V):
         dE = np.sum(np.abs(energies-ener_old))/numStates
         it_count += 1
         
-        print("Iteration " + str(it_count))
-        for i in range(numStates):
-            # prints out in orbital notation nl^pi,nu (j)
-            if states[i]["t3"] == 1: nuc = "n"
-            else: nuc = "p"
-            print(str(states[i]["n"])+orbit[states[i]["l"]]+"^"+nuc+"("+str(states[i]["j"])+"/2) " + str(round(energies[i],4))+ " MeV")
-            
-        print("\n")
+# =============================================================================
+#         print("Iteration " + str(it_count))
+#         for i in range(numStates):
+#             # prints out in orbital notation nl^pi,nu (j)
+#             if states[i]["t3"] == 1: nuc = "n"
+#             else: nuc = "p"
+#             print(str(states[i]["n"])+orbit[states[i]["l"]]+"^"+nuc+"("+str(states[i]["j"])+"/2) " + str(round(energies[i],4))+ " MeV")
+#             
+#         print("\n")
+# =============================================================================
         
         allEnergies.append(energies)
         
