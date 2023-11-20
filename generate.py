@@ -2,6 +2,7 @@ import numpy as np
 from tabulate import tabulate
 import time
 from HartreeFock import *
+from CGgenerator import *
 
     
 ##################################################################
@@ -29,6 +30,10 @@ n = [0,1]
 l = [2,0]
 j = [5,1]
 
+nlist = []
+llist = []
+jlist = []
+mjlist = []
             
 # Optimized Energies from literature 
 # realEps = -np.asarray([4.15,4.15,8.02,8.02,3.94,3.94,7.63,7.63,3.77,3.77,6.84,6.84,2.75,2.75,3.61,3.61,8.62,8.62,11.42,11.42,7,7,9.9,9.9])
@@ -40,7 +45,7 @@ for i in range(len(n)): # there is only l=0 and l=2 in this case but could be ad
         mj = j[i]
         while mj >= mj_min:
             # val = np.random.uniform(-2,2)
-            val = realEps[ite]
+            val = -realEps[ite]
             data.append([ite,n[i],l[i],j[i],int(mj),1,val])
             eps.append(val)
             ite +=1
@@ -48,6 +53,10 @@ for i in range(len(n)): # there is only l=0 and l=2 in this case but could be ad
             # ite +=1
             statesDict.append(dict(n=int(n[i]),l=int(l[i]),j=int(j[i]),mj=int(mj),t3=int(1)))
             # statesDict.append(dict(n=int(n[i]),l=int(l[i]),j=int(j[i]),mj=int(mj),t3=int(-1)))
+            nlist.append(n[i])
+            llist.append(l[i])
+            jlist.append(j[i])
+            mjlist.append(mj)
             mj = mj-2
             # eps.append(val)
             # x.append(val)
@@ -56,6 +65,7 @@ for i in range(len(n)): # there is only l=0 and l=2 in this case but could be ad
 f.write(tabulate(data, tablefmt="plain",showindex=False))
 f.close()
 
+converge = [7.767,7.767,7.767,7.767,7.767,7.767,7.767,7.767]
     
 ##################################################################
 ###           Generate Two Body Matrix Elements                ###
@@ -85,10 +95,19 @@ for a in range(ite):
                     if (c < d):
                     
                         if a < j[0]+1 and b < j[0]+1 and c < j[0]+1 and d < j[0]+1:
-                            ME = np.random.rand()*3.91/8
+                            ME = np.random.normal(3.91,3.91*0.12,1)
+                        elif a > j[0] and b > j[0] and c > j[0] and d > j[0]:
+                            ME = np.random.normal(3.65,3.65*0.12,1)
                         else:
-                            ME = 1/2*(V[a][b][c][d]-V[a][b][d][c]-V[b][a][c][d]+V[b][a][d][c])     
+                            ME = np.random.normal(2.68,2.68*0.12,1)
                             
+                        CG = 0
+                        Mp = int(mjlist[c]/2+mjlist[d]/2)
+                        Jp = int(jlist[c]/2+jlist[d]/2)
+                        for JM in range(Mp,Jp+1):
+                            CG += CFcoeff(jlist[c],jlist[d],mjlist[c],mjlist[d],JM,Mp)
+                            
+                        ME = CG*ME
                         x.append(ME)
                         
                         V[a][b][c][d] = ME
@@ -159,14 +178,15 @@ def x2epsV(vec_x):
 
 
 def calcError(E):
-    return np.sum(np.square(E[:A]-realEps[:A]))
+    return np.sum(np.square(E[:A]-converge[:A]))
 
 
-
+oldError = 0
+diffError = 1
         
 # Find the gradient for each element
 
-while Error > dE and stepN < maxSteps:
+while diffError > dE and stepN < maxSteps:
 
     df = np.zeros(len(x))
 
@@ -197,7 +217,11 @@ while Error > dE and stepN < maxSteps:
     
     epsNew, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,VN)
     
+    oldError = Error
     Error = calcError(epsNew[-1])
+    
+    diffError = abs(Error-oldError)
+    
     print(Error)
     print(epsNew[-1][:A])
     
