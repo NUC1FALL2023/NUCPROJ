@@ -63,7 +63,7 @@ for i in range(lenStates):
 # Expected negEnergies = A
 
 # A is number of nucleons
-A = 4
+A = 10
 
 bindingEnergies, negEnergies = HartreeFock(A,1e-5,1000,statesDict,eps,V)
 
