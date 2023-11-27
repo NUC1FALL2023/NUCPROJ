@@ -37,6 +37,7 @@ mjlist = []
             
 # Optimized Energies from literature 
 # realEps = -np.asarray([4.15,4.15,8.02,8.02,3.94,3.94,7.63,7.63,3.77,3.77,6.84,6.84,2.75,2.75,3.61,3.61,8.62,8.62,11.42,11.42,7,7,9.9,9.9])
+# energies for neutrons in the 0d5/2 and 1s1/2 states
 realEps = -np.asarray([4.15,4.15,4.15,4.15,4.15,4.15,2.75,2.75])
 
 # next we need to go over all possible combinations of quantum numbers, starting with 'n'
@@ -65,7 +66,8 @@ for i in range(len(n)): # there is only l=0 and l=2 in this case but could be ad
 f.write(tabulate(data, tablefmt="plain",showindex=False))
 f.close()
 
-converge = [7.767,7.767,7.767,7.767,7.767,7.767,7.767,7.767]
+# Binding energy of 18O
+converge = -np.asarray([7.767,7.767,7.767,7.767,7.767,7.767,7.767,7.767])
     
 ##################################################################
 ###           Generate Two Body Matrix Elements                ###
@@ -94,6 +96,8 @@ for a in range(ite):
                 for d in range(ite):
                     if (c < d):
                     
+                        # Randomizing starting guess by pulling from a normal distribution
+                        # centered around formula in class with a width of 12% (2 sigma?)
                         if a < j[0]+1 and b < j[0]+1 and c < j[0]+1 and d < j[0]+1:
                             ME = np.random.normal(3.91,3.91*0.12,1)
                         elif a > j[0] and b > j[0] and c > j[0] and d > j[0]:
@@ -101,24 +105,28 @@ for a in range(ite):
                         else:
                             ME = np.random.normal(2.68,2.68*0.12,1)
                             
+                        # Normalizing using Clebsch-Gordon Coefficients (Take a look at CGgenerator.py)
                         CG = 0
-                        Mp = int(mjlist[c]/2+mjlist[d]/2)
+                        Mp = abs(int(mjlist[c]/2+mjlist[d]/2))
                         Jp = int(jlist[c]/2+jlist[d]/2)
                         for JM in range(Mp,Jp+1):
-                            CG += CFcoeff(jlist[c],jlist[d],mjlist[c],mjlist[d],JM,Mp)
+                            CG += CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
                             
                         ME = CG*ME
-                        x.append(ME)
                         
-                        V[a][b][c][d] = ME
-                        V[b][a][d][c] = ME
-                        V[b][a][c][d] = -ME
-                        V[a][b][d][c] = -ME
+                        # Add to parameter array
+                        x.append(ME[0])
                         
-                        f.write(str(a) + '\t' + str(b) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(ME) + '\n')
-                        f.write(str(b) + '\t' + str(a) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(-ME) + '\n')
-                        f.write(str(a) + '\t' + str(b) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(-ME) + '\n')
-                        f.write(str(b) + '\t' + str(a) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(ME) + '\n')
+                        # Antisymmetry
+                        V[a][b][c][d] = ME[0]
+                        V[b][a][d][c] = ME[0]
+                        V[b][a][c][d] = -ME[0]
+                        V[a][b][d][c] = -ME[0]
+                        
+                        f.write(str(a) + '\t' + str(b) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(ME[0]) + '\n')
+                        f.write(str(b) + '\t' + str(a) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(-ME[0]) + '\n')
+                        f.write(str(a) + '\t' + str(b) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(-ME[0]) + '\n')
+                        f.write(str(b) + '\t' + str(a) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(ME[0]) + '\n')
  						
 f.close()
 end = time.time()
@@ -135,14 +143,17 @@ step = 1e-3
 rate = np.zeros(len(x))
 A = 2
 Error = 1e20
-dE = 1e-5
+dE = 1e-3
 stepN = 0
-maxSteps = 1000
+maxSteps = 400
 max_iter = 20
 
+# The learning rate for greatest descent
+# This gets the magnitude of N, ie returns x in 10^x
 def getRate(N):
     return np.floor(np.log10(abs(N)))
 
+# Converts array of parameters into an array of hamiltonian energies and tbm
 def x2epsV(vec_x):
     energy = np.zeros(ite)
     tbme = np.zeros([ite,ite,ite,ite])
@@ -175,18 +186,17 @@ def x2epsV(vec_x):
     return energy, tbme
 
 
-
-
+# The functions to minimize is the error function, fitting least squares to the 
+# binding energy of 18O
 def calcError(E):
     return np.sum(np.square(E[:A]-converge[:A]))
-
 
 oldError = 0
 diffError = 1
         
 # Find the gradient for each element
 
-while diffError > dE and stepN < maxSteps:
+while Error > dE and stepN < maxSteps:
 
     df = np.zeros(len(x))
 
@@ -195,26 +205,42 @@ while diffError > dE and stepN < maxSteps:
         xPlus = x.copy()
         xMinus = x.copy()
         
+        # For each parameter, go both directions
         xPlus[i] += step
         xMinus[i] -= step
         
+        # Parameters to matrices
         skip, VPlus = x2epsV(xPlus)
         skip, VMinus = x2epsV(xMinus)
         
+        # Hartree Fock to get the energies
         epsNewPlus, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,VPlus)    
         epsNewMinus, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,VMinus)
         
+        # Calculate the error
         fplus = calcError(epsNewPlus[-1])
         fminus = calcError(epsNewMinus[-1])
         
+        # Get the slope/gradient
         df[i] = (fplus-fminus)/(2*step)
         
+        # Dynamic learning rate, here we change parameters by 10^-3
         rate[i] = 10**(-(getRate(df[i])+3))
         
+        # To speed up the process, at the beginning, change parameters more,
+        # and near the end, get better precision
+        if stepN < 10:
+            rate[i] = rate[i]*3
+        if stepN > 15:
+            rate[i] = rate[i]/2
+        
+    # Change the parameters by going in the negative gradient direction
     x = x-rate*df
     
+    # Get new tbme
     skip, VN = x2epsV(x)
     
+    # Used to calculate the current error
     epsNew, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,VN)
     
     oldError = Error
@@ -227,6 +253,7 @@ while diffError > dE and stepN < maxSteps:
     
     stepN += 1
     
+# Prepare and print the final elements
 skip, finalV = x2epsV(x)
 
 finalEps = epsNew.copy()

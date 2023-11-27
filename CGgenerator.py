@@ -6,6 +6,8 @@ def CGcoeff(j1,j2,m1,m2,J,M):
     CG = 0
     
     if M == m1+m2:
+        if J+j1-j2 < 0 or J-j1+j2 < 0 or j1+j2-J < 0:
+            return 0
         CG += np.sqrt((int(2*J+1))*fac(int(J+j1-j2))*fac(int(J-j1+j2))*fac(int(j1+j2-J))/fac(int(j1+j2+J+1)))
         
     CG *= np.sqrt(fac(int(J+M))*fac(int(J-M))*fac(int(j1-m1))*fac(int(j1+m1))*fac(int(j2-m2))*fac(int(j2+m2)))
