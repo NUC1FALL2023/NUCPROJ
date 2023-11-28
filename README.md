@@ -24,7 +24,7 @@ Checks for negative factorials, and there are none, calculates the CG coefficien
 ## generate.py
 Generates all possible  $0d_{5/2}$  and   $1s_{1/2}$  states, ie. finds all possible $m_j$ and $t_3$ for level. We ignore  $0d_{3/2}$  since we start with the lowest shell. We also ignore all protons (we only set $t_3$ = 1) for simplicity. The one body matrix elements can be set using physical values. For example: 
 $$e_{0d_{5/2}}=E(^{17}O,\frac{5}{2}^+)-E(^{16}O,O^+)$$
-The tbme are randomly generated from a normal distribution using a mean of some similar physical values and a width of 12%. For example, the mean for the $0d_{5/2}$ can be found as:
+The tbme for the interaction between $0d_{5/2}$  and   $1s_{1/2}$  states are randomly generated from a normal distribution using a mean of some similar physical values and a width of 12%, while the tbme for just $0d_{5/2}$  and just   $1s_{1/2}$  states are fixed. For example, the mean for the $0d_{5/2}$ can be found as:
 $$<(0d5/2)^2|\hat{V}|(0d5/2)^2)>=E(^{18}O,O^+)-2e_{0d5/2}-E(^{16}O,O^+)$$
 From here, we start optimizing these tbme while fixing the one body matrix elements. The function we try to minimize is (least squares minimization):
 $$f(\vec{x}) = \sum_{i}(x_i - x_{data})^2$$
