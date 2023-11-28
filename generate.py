@@ -3,6 +3,7 @@ from tabulate import tabulate
 import time
 from HartreeFock import *
 from CGgenerator import *
+import math
 
     
 ##################################################################
@@ -96,14 +97,16 @@ for a in range(ite):
                 for d in range(ite):
                     if (c < d):
                     
+                        param = False
                         # Randomizing starting guess by pulling from a normal distribution
                         # centered around formula in class with a width of 12% (2 sigma?)
                         if a < j[0]+1 and b < j[0]+1 and c < j[0]+1 and d < j[0]+1:
-                            ME = np.random.normal(3.91,3.91*0.12,1)
+                            ME = 3.91
                         elif a > j[0] and b > j[0] and c > j[0] and d > j[0]:
-                            ME = np.random.normal(3.65,3.65*0.12,1)
+                            ME = 3.65
                         else:
-                            ME = np.random.normal(2.68,2.68*0.12,1)
+                            ME = np.random.normal(2.68,2.68*0.12)
+                            param = True
                             
                         # Normalizing using Clebsch-Gordon Coefficients (Take a look at CGgenerator.py)
                         CG = 0
@@ -115,18 +118,19 @@ for a in range(ite):
                         ME = CG*ME
                         
                         # Add to parameter array
-                        x.append(ME[0])
+                        if param:
+                            x.append(ME)
                         
                         # Antisymmetry
-                        V[a][b][c][d] = ME[0]
-                        V[b][a][d][c] = ME[0]
-                        V[b][a][c][d] = -ME[0]
-                        V[a][b][d][c] = -ME[0]
+                        V[a][b][c][d] = ME
+                        V[b][a][d][c] = ME
+                        V[b][a][c][d] = -ME
+                        V[a][b][d][c] = -ME
                         
-                        f.write(str(a) + '\t' + str(b) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(ME[0]) + '\n')
-                        f.write(str(b) + '\t' + str(a) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(-ME[0]) + '\n')
-                        f.write(str(a) + '\t' + str(b) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(-ME[0]) + '\n')
-                        f.write(str(b) + '\t' + str(a) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(ME[0]) + '\n')
+                        f.write(str(a) + '\t' + str(b) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(ME) + '\n')
+                        f.write(str(b) + '\t' + str(a) + '\t'+ str(c) + '\t' + str(d) + '\t' + str(-ME) + '\n')
+                        f.write(str(a) + '\t' + str(b) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(-ME) + '\n')
+                        f.write(str(b) + '\t' + str(a) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(ME) + '\n')
  						
 f.close()
 end = time.time()
@@ -138,7 +142,7 @@ end = time.time()
 ###        Optimize Energies and Two Body Matrix Elements      ###
 ##################################################################
 
-step = 1e-3
+step = 1e-2
 # rate = 1e-3
 rate = np.zeros(len(x))
 A = 2
@@ -151,6 +155,8 @@ max_iter = 20
 # The learning rate for greatest descent
 # This gets the magnitude of N, ie returns x in 10^x
 def getRate(N):
+    if N==0:
+        return 1
     return np.floor(np.log10(abs(N)))
 
 # Converts array of parameters into an array of hamiltonian energies and tbm
@@ -175,8 +181,13 @@ def x2epsV(vec_x):
                     for d in range(ite):
                         if (c < d):
                             
-                            ME = vec_x[ind]
-                            ind += 1
+                            if a < j[0]+1 and b < j[0]+1 and c < j[0]+1 and d < j[0]+1:
+                                ME = 3.91
+                            elif a > j[0] and b > j[0] and c > j[0] and d > j[0]:
+                                ME = 3.65
+                            else:    
+                                ME = vec_x[ind]
+                                ind += 1
                                 
                             tbme[a][b][c][d] = ME
                             tbme[b][a][d][c] = ME
@@ -191,8 +202,12 @@ def x2epsV(vec_x):
 def calcError(E):
     return np.sum(np.square(E[:A]-converge[:A]))
 
+errorArray = []
 oldError = 0
 diffError = 1
+
+epsInit, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,V)
+errorArray.append(calcError(epsInit[-1]))
         
 # Find the gradient for each element
 
@@ -231,8 +246,10 @@ while Error > dE and stepN < maxSteps:
         # and near the end, get better precision
         if stepN < 10:
             rate[i] = rate[i]*3
-        if stepN > 15:
+        if stepN > 20 and stepN < 50:
             rate[i] = rate[i]/2
+        if stepN > 50:
+            rate[i] = rate[i]/5
         
     # Change the parameters by going in the negative gradient direction
     x = x-rate*df
@@ -245,6 +262,7 @@ while Error > dE and stepN < maxSteps:
     
     oldError = Error
     Error = calcError(epsNew[-1])
+    errorArray.append(Error)
     
     diffError = abs(Error-oldError)
     
@@ -290,4 +308,11 @@ for a in range(ite):
                         f.write(str(a) + '\t' + str(b) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(finalV[a][b][d][c]) + '\n')
                         f.write(str(b) + '\t' + str(a) + '\t'+ str(d) + '\t' + str(c) + '\t' + str(finalV[b][a][d][c]) + '\n')
                         
+f.close()
+
+f = open("gd_step.dat","w")
+
+for i in errorArray:
+    f.write(str(i)+'\n')
+    
 f.close()
