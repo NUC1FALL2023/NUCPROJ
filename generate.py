@@ -110,11 +110,16 @@ for a in range(ite):
                             
                         # Normalizing using Clebsch-Gordon Coefficients (Take a look at CGgenerator.py)
                         CG = 0
-                        Mp = abs(int(mjlist[c]/2+mjlist[d]/2))
-                        Jp = int(jlist[c]/2+jlist[d]/2)
-                        for JM in range(Mp,Jp+1):
-                            CG += CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
+                        if jlist[c] > jlist[d]:
+                            Jmin = int((jlist[c] - jlist[d])/2)
+                        else:
+                            Jmin = int((jlist[d] - jlist[c])/2)
+                        Jmax = int((jlist[c]+jlist[d])/2)
+                        for JM in range(Jmin,Jmax):
+                            for Mp in range(-JM,JM):
+                                CG += CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
                             
+                        
                         ME = CG*ME
                         
                         # Add to parameter array
