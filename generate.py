@@ -109,15 +109,9 @@ for a in range(ite):
                             param = True
                             
                         # Normalizing using Clebsch-Gordon Coefficients (Take a look at CGgenerator.py)
-                        CG = 0
-                        if jlist[c] > jlist[d]:
-                            Jmin = int((jlist[c] - jlist[d])/2)
-                        else:
-                            Jmin = int((jlist[d] - jlist[c])/2)
-                        Jmax = int((jlist[c]+jlist[d])/2)
-                        for JM in range(Jmin,Jmax):
-                            for Mp in range(-JM,JM):
-                                CG += CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
+                        JM = int((jlist[c]+jlist[d])/2)
+                        Mp = int((mjlist[c]+mjlist[d])/2)
+                        CG = CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
                             
                         
                         ME = CG*ME
@@ -155,7 +149,7 @@ Error = 1e20
 dE = 1e-3
 stepN = 0
 maxSteps = 400
-max_iter = 20
+max_iter = 15
 
 # The learning rate for greatest descent
 # This gets the magnitude of N, ie returns x in 10^x
@@ -215,6 +209,7 @@ epsInit, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,V)
 errorArray.append(calcError(epsInit[-1]))
         
 # Find the gradient for each element
+ALL_TBME = []
 
 while Error > dE and stepN < maxSteps:
 
@@ -251,16 +246,17 @@ while Error > dE and stepN < maxSteps:
         # and near the end, get better precision
         if stepN < 10:
             rate[i] = rate[i]*3
-        if stepN > 20 and stepN < 50:
+        if stepN > 20 and stepN < 60:
             rate[i] = rate[i]/2
-        if stepN > 50:
-            rate[i] = rate[i]/5
+        if stepN >= 60:
+            rate[i] = rate[i]/10
         
     # Change the parameters by going in the negative gradient direction
     x = x-rate*df
     
     # Get new tbme
     skip, VN = x2epsV(x)
+    ALL_TBME.append(VN)
     
     # Used to calculate the current error
     epsNew, skip = HartreeFock(A,1e-5,max_iter,statesDict,eps,VN)
@@ -281,23 +277,25 @@ skip, finalV = x2epsV(x)
 
 finalEps = epsNew.copy()
 
-f = open("sdbasisGeneratedOptimized.dat","w")
-dataOpt = []
-k = 0
-
-for i in range(len(n)): # there is only l=0 and l=2 in this case but could be adjusted for any number
-        mj_min = -j[i] # mj goes from j to -j in increments of 1
-        mj = j[i]
-        while mj >= mj_min:
-            dataOpt.append([ite,n[i],l[i],j[i],int(mj),1,finalEps[k]])
-            k += 1
-            dataOpt.append([ite,n[i],l[i],j[i],int(mj),-1,finalEps[k]])
-            k += 1
-            mj = mj-2
-            
-
-f.write(tabulate(dataOpt, tablefmt="plain",showindex=False))
-f.close()
+# =============================================================================
+# f = open("sdbasisGeneratedOptimized.dat","w")
+# dataOpt = []
+# k = 0
+# 
+# for i in range(len(n)): # there is only l=0 and l=2 in this case but could be adjusted for any number
+#         mj_min = -j[i] # mj goes from j to -j in increments of 1
+#         mj = j[i]
+#         while mj >= mj_min:
+#             dataOpt.append([ite,n[i],l[i],j[i],int(mj),1,finalEps[k]])
+#             k += 1
+#             dataOpt.append([ite,n[i],l[i],j[i],int(mj),-1,finalEps[k]])
+#             k += 1
+#             mj = mj-2
+#             
+# 
+# f.write(tabulate(dataOpt, tablefmt="plain",showindex=False))
+# f.close()
+# =============================================================================
     
 f = open("tbmeGeneratedOptimized.dat","w")
 
