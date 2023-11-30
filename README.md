@@ -1,8 +1,9 @@
 # NUCPROJ
 
 ## Directory Structure
-* main.py
+* main.py, main2.py
   * Reads in spbasis.dat and tbme.dat, then uses Hartree-Fock to calculate the single particle energies for a given A.
+  * main2.py does the same but uses experimental energies and optimized two-body matrix elements for the sd-basis.
 * HartreeFock.py
   * The main function for Hartree-Fock, can be imported to any file for general use, ex. main.py.
 * generate.py
