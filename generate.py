@@ -68,7 +68,6 @@ f.write(tabulate(data, tablefmt="plain",showindex=False))
 f.close()
 
 # Binding energy of 18O
-converge = -np.asarray([7.767,7.767,7.767,7.767,7.767,7.767,7.767,7.767])
     
 ##################################################################
 ###           Generate Two Body Matrix Elements                ###
@@ -141,7 +140,7 @@ end = time.time()
 ###        Optimize Energies and Two Body Matrix Elements      ###
 ##################################################################
 
-step = 1e-2
+step = 1e-5
 # rate = 1e-3
 rate = np.zeros(len(x))
 A = 2
@@ -149,7 +148,10 @@ Error = 1e20
 dE = 1e-3
 stepN = 0
 maxSteps = 400
-max_iter = 15
+max_iter = 20
+data = np.asarray([-7.750,-7.767,-7.566,-7.568,-7.389,-7.364])
+
+converge = -np.ones(8)*(((16+A)*(-data[A-1])-7.976*16)/A)
 
 # The learning rate for greatest descent
 # This gets the magnitude of N, ie returns x in 10^x
@@ -181,13 +183,19 @@ def x2epsV(vec_x):
                         if (c < d):
                             
                             if a < j[0]+1 and b < j[0]+1 and c < j[0]+1 and d < j[0]+1:
-                                ME = 3.91
+                                JM = int((jlist[c]+jlist[d])/2)
+                                Mp = int((mjlist[c]+mjlist[d])/2)
+                                CG = CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
+                                ME = CG*3.91
                             elif a > j[0] and b > j[0] and c > j[0] and d > j[0]:
-                                ME = 3.65
+                                JM = int((jlist[c]+jlist[d])/2)
+                                Mp = int((mjlist[c]+mjlist[d])/2)
+                                CG = CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
+                                ME = CG*3.65
                             else:    
                                 ME = vec_x[ind]
                                 ind += 1
-                                
+                            
                             tbme[a][b][c][d] = ME
                             tbme[b][a][d][c] = ME
                             tbme[b][a][c][d] = -ME
@@ -239,17 +247,18 @@ while Error > dE and stepN < maxSteps:
         # Get the slope/gradient
         df[i] = (fplus-fminus)/(2*step)
         
+        rate[i] = 1e-3
         # Dynamic learning rate, here we change parameters by 10^-3
-        rate[i] = 10**(-(getRate(df[i])+3))
+        #rate[i] = 10**(-(getRate(df[i])+4))
         
         # To speed up the process, at the beginning, change parameters more,
         # and near the end, get better precision
-        if stepN < 10:
-            rate[i] = rate[i]*3
-        if stepN > 20 and stepN < 60:
-            rate[i] = rate[i]/2
-        if stepN >= 60:
-            rate[i] = rate[i]/10
+        #if stepN < 10:
+        #    rate[i] = rate[i]*3
+        #if stepN > 20 and stepN < 60:
+        #    rate[i] = rate[i]
+        #if stepN >= 60:
+        #    rate[i] = rate[i]/5
         
     # Change the parameters by going in the negative gradient direction
     x = x-rate*df
