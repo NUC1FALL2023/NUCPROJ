@@ -31,4 +31,4 @@ From here, we start optimizing these tbme while fixing the one body matrix eleme
 $$f(\vec{x}) = \sum_{i}(x_i - x_{data})^2$$
 where $x_data$ is the experimental single particle energies and $x$ is the calculated single particle energies, and $i$ ranges from $1$ to $A$. 
 
-The optimization procedure starts with finding the gradient of our function. This is done one at a time for each parameter in our array. Then we change the parameters by going against the gradient using a learning rate, which we dynamically set to speed up the process. We set learning rate such that we change the parameters by a magnitude of $10^{-3}$. The loop ends once we find an error below some threshold.
+The optimization procedure starts with finding the gradient of our function. This is done one at a time for each parameter in our array. Then we change the parameters by going against the gradient using a learning rate of $1\mathrm{e}-4$. The loop ends once we find an error below some threshold.
