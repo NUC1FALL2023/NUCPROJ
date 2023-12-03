@@ -23,7 +23,7 @@ for i in range(len(n)): # there is only l=0 and l=2 in this case but could be ad
     
 lenStates = len(statesDict)
     
-Vfile = open('tbmeGeneratedOptimized.dat','r')
+Vfile = open('tbmeGeneratedRaw.dat','r')
 
 VDict = []
 
@@ -61,26 +61,28 @@ eps = realEps
 # Expected negEnergies = A
 
 # A is number of nucleons
-A = 4
+A = np.asarray([1,2,3,4,5,6])
 
-bindingEnergies, negEnergies = HartreeFock(A,1e-5,1000,statesDict,eps,V)
-
-# Writing out final energies
-# orbit defined by l quantum number
-orbit = ["s","p","d","f","g","h"]
-f = open("BindingEnergiesHO.txt","w")
-
-for i in range(lenStates):
-    # prints out in orbital notation nl^pi,nu (j)
-    if statesDict[i]["t3"] == 1: nuc = "n"
-    else: nuc = "p"
-    f.write(str(statesDict[i]["n"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(bindingEnergies[-1][i],4))+ " MeV\n")
+for AN in A:
+    bindingEnergies, negEnergies = HartreeFock(AN,1e-5,20,statesDict,eps,V)
     
-B = np.zeros(len(bindingEnergies))
-
-# Calculates the binding energy per nucleon and stores it in an array
-for i in range(len(bindingEnergies)):
-    B[i] = sum(bindingEnergies[i][:negEnergies])/negEnergies
+    # Writing out final energies
+    # orbit defined by l quantum number
+    orbit = ["s","p","d","f","g","h"]
+    f = open("BindingEnergiesHO.txt","w")
+    
+    for i in range(lenStates):
+        # prints out in orbital notation nl^pi,nu (j)
+        if statesDict[i]["t3"] == 1: nuc = "n"
+        else: nuc = "p"
+        f.write(str(statesDict[i]["n"])+orbit[statesDict[i]["l"]]+"^"+nuc+"("+str(statesDict[i]["j"])+"/2) " + str(round(bindingEnergies[-1][i],4))+ " MeV\n")
         
-
-f.close()
+    B = np.zeros(len(bindingEnergies))
+    
+    # Calculates the binding energy per nucleon and stores it in an array
+    for i in range(len(bindingEnergies)):
+        B[i] = sum(bindingEnergies[i][:negEnergies])/negEnergies
+            
+    print((np.average(bindingEnergies[-1][:AN])*AN-7.976*16)/(16+AN))
+    
+    f.close()

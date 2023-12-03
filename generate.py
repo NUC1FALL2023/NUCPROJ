@@ -39,7 +39,7 @@ mjlist = []
 # Optimized Energies from literature 
 # realEps = -np.asarray([4.15,4.15,8.02,8.02,3.94,3.94,7.63,7.63,3.77,3.77,6.84,6.84,2.75,2.75,3.61,3.61,8.62,8.62,11.42,11.42,7,7,9.9,9.9])
 # energies for neutrons in the 0d5/2 and 1s1/2 states
-realEps = -np.asarray([4.15,4.15,4.15,4.15,4.15,4.15,2.75,2.75])
+realEps = np.asarray([4.15,4.15,4.15,4.15,4.15,4.15,2.75,2.75])
 
 # next we need to go over all possible combinations of quantum numbers, starting with 'n'
 for i in range(len(n)): # there is only l=0 and l=2 in this case but could be adjusted for any number
@@ -47,7 +47,7 @@ for i in range(len(n)): # there is only l=0 and l=2 in this case but could be ad
         mj = j[i]
         while mj >= mj_min:
             # val = np.random.uniform(-2,2)
-            val = -realEps[ite]
+            val = realEps[ite]
             data.append([ite,n[i],l[i],j[i],int(mj),1,val])
             eps.append(val)
             ite +=1
@@ -102,7 +102,7 @@ for a in range(ite):
                         if a < j[0]+1 and b < j[0]+1 and c < j[0]+1 and d < j[0]+1:
                             ME = 3.91
                         elif a > j[0] and b > j[0] and c > j[0] and d > j[0]:
-                            ME = 3.65
+                            ME = 1.46
                         else:
                             ME = np.random.normal(2.68,2.68*0.12)
                             param = True
@@ -191,7 +191,7 @@ def x2epsV(vec_x):
                                 JM = int((jlist[c]+jlist[d])/2)
                                 Mp = int((mjlist[c]+mjlist[d])/2)
                                 CG = CGcoeff(jlist[c]/2,jlist[d]/2,mjlist[c]/2,mjlist[d]/2,JM,Mp)
-                                ME = CG*3.65
+                                ME = CG*1.46
                             else:    
                                 ME = vec_x[ind]
                                 ind += 1
